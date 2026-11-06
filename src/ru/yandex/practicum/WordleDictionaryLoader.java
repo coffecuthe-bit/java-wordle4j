@@ -1,5 +1,7 @@
 package ru.yandex.practicum;
 
+import ru.yandex.practicum.exception.WordleException;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -23,7 +25,7 @@ public class WordleDictionaryLoader {
     public WordleDictionary loadFile(Path path) {
         File f = new File(path.toUri());
         if (!f.exists()) {
-            throw new RuntimeException(String.format("File not found %s", path));
+            throw new WordleException(String.format("Не удалось найти словарь по пути '%s'", path));
         }
         try {
             List<String> words = Files.readAllLines(path, StandardCharsets.UTF_8);
@@ -32,7 +34,7 @@ public class WordleDictionaryLoader {
             return new WordleDictionary(words);
 
         } catch (IOException e) {
-            throw new RuntimeException("Словарь пустой или не найден");
+            throw new WordleException("Словарь пустой или не найден");
         }
     }
 
