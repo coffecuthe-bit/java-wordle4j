@@ -2,14 +2,14 @@ package ru.yandex.practicum;
 
 import ru.yandex.practicum.exception.WordleException;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
-
 /*
 этот класс содержит в себе всю рутину по работе с файлами словарей и с кодировками
     ему нужны методы по загрузке списка слов из файла по имени файла
@@ -17,44 +17,33 @@ import java.util.ListIterator;
  */
 public class WordleDictionaryLoader {
 
+    private final PrintWriter log;
 
-    public WordleDictionaryLoader() {
+    public WordleDictionaryLoader(PrintWriter log) {
+        this.log = log;
     }
-
 
     public WordleDictionary loadFile(Path path) {
-        File f = new File(path.toUri());
-        if (!f.exists()) {
+        if (!Files.exists(path)) {
             throw new WordleException(String.format("Не удалось найти словарь по пути '%s'", path));
         }
-        try {
-            List<String> words = Files.readAllLines(path, StandardCharsets.UTF_8);
-            normalizeWords(words);
-            words = words.stream().sorted().toList();
-            return new WordleDictionary(words);
-
+        List<String> result = new ArrayList<>();
+        try (BufferedReader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String word = WordleDictionary.normalize(line.trim());
+                if (WordleDictionary.isValidFormat(word)) {
+                    result.add(word);
+                }
+            }
         } catch (IOException e) {
-            throw new WordleException("Словарь пустой или не найден");
+            throw new WordleException(String.format("Ошибка чтения словаря '%s': %s", path, e.getMessage()), e);
         }
-    }
-
-    private void normalizeWords(List<String> words) {
-        ListIterator<String> iterator = words.listIterator();
-        while (iterator.hasNext()) {
-            String word = iterator.next().toLowerCase();
-            if (word.length() != 5) {
-                iterator.remove();
-                continue;
-            }
-            boolean ruWord = word.matches("[а-яё]+");
-            if (!ruWord) {
-                iterator.remove();
-                continue;
-            }
-            if (word.contains("ё")) {
-                word = word.replace("ё", "е");
-            }
-            iterator.set(word);
+        if (result.isEmpty()) {
+            throw new WordleException(String.format("Словарь '%s' не содержит подходящих слов", path));
         }
+        result.sort(null);
+        log.printf("Словарь '%s' загружен, подходящих слов: %d%n", path, result.size());
+        return new WordleDictionary(result);
     }
 }
