@@ -6,6 +6,7 @@ import ru.yandex.practicum.exception.InvalidWordException;
 import ru.yandex.practicum.exception.WordNotFoundException;
 
 import java.io.PrintWriter;
+
 /*
 в этом классе хранится словарь и состояние игры
     текущий шаг
